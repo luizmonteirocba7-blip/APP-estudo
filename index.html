@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Estudos CBMMT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --font-mono: 'Courier New', Courier, monospace;
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --border-radius-md: 6px;
+            --border-radius-lg: 10px;
+        }
+
+        body {
+            background-color: #050a0d; /* Fundo escuro para combinar com o painel */
+            margin: 0;
+            padding: 20px 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .painel {
+            padding: 1rem 0;
+            font-family: var(--font-mono);
+            color: #d4e5e8;
+        }
+        
+        .painel * { box-sizing: border-box; }
+        
+        .hud-frame {
+            background: linear-gradient(180deg, #0a1419 0%, #0d1b22 100%);
+            border: 1px solid #1e3a44;
+            border-radius: var(--border-radius-lg);
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        .hud-frame::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #00d4aa, transparent);
+        }
+        
+        .hud-corner {
+            position: absolute;
+            width: 12px; height: 12px;
+            border: 1px solid #00d4aa;
+        }
+        .hud-corner.tl { top: 4px; left: 4px; border-right: none; border-bottom: none; }
+        .hud-corner.tr { top: 4px; right: 4px; border-left: none; border-bottom: none; }
+        .hud-corner.bl { bottom: 4px; left: 4px; border-right: none; border-top: none; }
+        .hud-corner.br { bottom: 4px; right: 4px; border-left: none; border-top: none; }
+        
+        .hud-title {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #00d4aa;
+            margin: 0 0 4px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        
+        .hud-subtitle {
+            font-size: 18px;
+            font-weight: 500;
+            margin: 0 0 4px;
+            color: #e8f4f6;
+            font-family: var(--font-sans);
+            letter-spacing: 0.5px;
+        }
+        
+        .hud-meta {
+            font-size: 11px;
+            color: #6a8590;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-overall { margin-top: 16px; }
+        .progress-bar-bg {
+            width: 100%; height: 8px;
+            background: #0a1419;
+            border: 1px solid #1e3a44;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4aa, #00ffcc);
+            box-shadow: 0 0 8px rgba(0, 212, 170, 0.5);
+            transition: width 0.4s ease;
+        }
+        
+        .stats-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+        .stat-pill {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 2px;
+            background: #0a1419;
+            border: 1px solid #1e3a44;
+            color: #8aa5b0;
+            letter-spacing: 0.5px;
+        }
+        .stat-pill.primary { color: #00d4aa; border-color: #00d4aa; font-weight: 500; }
+        .stat-pill.green { color: #7dd957; border-color: #2d4f1f; }
+        .stat-pill.blue { color: #5db4ff; border-color: #1e3f5e; }
+        .stat-pill.amber { color: #ffb84d; border-color: #5e3f1e; }
+        .stat-pill.gray { color: #6a8590; border-color: #1e3a44; }
+
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0 10px;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: #00d4aa;
+            text-transform: uppercase;
+        }
+        .section-divider::before, .section-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #1e3a44, transparent);
+        }
+        .section-divider .marker {
+            color: #ffb84d;
+        }
+
+        .subject-card {
+            background: #0d1b22;
+            border: 1px solid #1e3a44;
+            border-radius: var(--border-radius-md);
+            margin-bottom: 10px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .subject-card:hover { border-color: #2d5563; }
+        .subject-card.open { border-color: #00d4aa; }
+
+        .subject-header {
+            padding: 12px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            user-select: none;
+        }
+        .subject-header:hover { background: #11242c; }
+        .subject-info { flex: 1; min-width: 0; }
+        .subject-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0 0 3px;
+            color: #e8f4f6;
+            font-family: var(--font-sans);
+            letter-spacing: 0.3px;
+        }
+        .subject-meta {
+            font-size: 10px;
+            color: #6a8590;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+        
+        .subject-progress { display: flex; align-items: center; gap: 10px; }
+        .mini-bar-bg {
+            width: 70px; height: 4px;
+            background: #0a1419;
+            border: 1px solid #1e3a44;
+            border-radius: 1px;
+            overflow: hidden;
+        }
+        .mini-bar-fill { height: 100%; transition: width 0.4s ease; }
+        .mini-bar-num {
+            font-size: 11px;
+            color: #8aa5b0;
+            min-width: 32px;
+            text-align: right;
+        }
+        
+        .chevron {
+            color: #4a6670;
+            font-size: 14px;
+            transition: transform 0.2s;
+            width: 12px;
+            text-align: center;
+        }
+        .subject-card.open .chevron { transform: rotate(90deg); color: #00d4aa; }
+
+        .topics-list {
+            display: none;
+            border-top: 1px solid #1e3a44;
+            padding: 4px 0;
+            background: #0a1419;
+        }
+        .subject-card.open .topics-list { display: block; }
+        .topic-row {
+            padding: 7px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            border-left: 2px solid transparent;
+        }
+        .topic-row:hover {
+            background: #11242c;
+            border-left-color: #00d4aa;
+        }
+        .topic-text {
+            flex: 1;
+            color: #c5d6da;
+            line-height: 1.5;
+            font-family: var(--font-sans);
+        }
+        
+        .topic-status { display: flex; gap: 3px; }
+        .status-btn {
+            width: 26px; height: 26px;
+            border-radius: 4px;
+            border: 1px solid #1e3a44;
+            background: #0d1b22;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #4a6670;
+            padding: 0;
+            transition: all 0.15s;
+        }
+        .status-btn:hover { border-color: #00d4aa; color: #00d4aa; }
+        .status-btn.active.naoestudado { background: #1a2a32; border-color: #4a6670; color: #8aa5b0; }
+        .status-btn.active.estudando { background: #3d2a0a; border-color: #ffb84d; color: #ffb84d; }
+        .status-btn.active.revisar { background: #0a2540; border-color: #5db4ff; color: #5db4ff; }
+        .status-btn.active.dominado { background: #0a3320; border-color: #7dd957; color: #7dd957; box-shadow: 0 0 6px rgba(125, 217, 87, 0.3); }
+
+        .legend {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 10px;
+            color: #6a8590;
+            margin: 12px 0;
+            padding: 8px 12px;
+            background: #0a1419;
+            border: 1px solid #1e3a44;
+            border-radius: 2px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 1px; border: 1px solid; }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+            padding: 12px;
+            background: #0d1b22;
+            border: 1px solid #1e3a44;
+            border-radius: var(--border-radius-md);
+        }
+        .study-btn {
+            font-size: 11px;
+            padding: 10px 16px;
+            border-radius: 4px;
+            background: transparent;
+            border: 1px solid #1e3a44;
+            cursor: pointer;
+            color: #8aa5b0;
+            font-family: var(--font-mono);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.15s;
+        }
+        .study-btn:hover { border-color: #00d4aa; color: #00d4aa; background: #0a1f1a; }
+        .study-btn.primary {
+            background: #0a1f1a;
+            color: #00d4aa;
+            border-color: #00d4aa;
+        }
+        .study-btn.primary:hover {
+            background: #00d4aa;
+            color: #0a1419;
+            box-shadow: 0 0 8px rgba(0, 212, 170, 0.4);
+        }
+        .study-btn.danger { color: #ff6b6b; border-color: #4a2a2a; }
+        .study-btn.danger:hover { border-color: #ff6b6b; background: #2a0a0a; color: #ff6b6b; box-shadow: 0 0 8px rgba(255, 107, 107, 0.4); }
+
+        .cp-group-marker {
+            display: inline-block;
+            background: #0a2540;
+            color: #5db4ff;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 2px;
+            border: 1px solid #1e3f5e;
+            margin-right: 6px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            vertical-align: 1px;
+        }
+
+        .loading {
+            padding: 2rem;
+            text-align: center;
+            color: #00d4aa;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(5, 10, 13, 0.85);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-box {
+            background: #0d1b22;
+            border: 1px solid #00d4aa;
+            border-radius: var(--border-radius-md);
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            font-family: var(--font-sans);
+        }
+        .modal-text {
+            color: #e8f4f6;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="painel">
+            <div id="content" class="loading">// inicializando sistema...</div>
+        </div>
+    </div>
+
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-box">
+            <div id="modalMessage" class="modal-text"></div>
+            <div class="modal-actions">
+                <button id="modalBtnCancel" class="study-btn">Cancelar</button>
+                <button id="modalBtnConfirm" class="study-btn primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const EDITAL_DATA = {
+            "cp_incendio": {
+                name: "Prevenção e Combate a Incêndio",
+                meta: "CP · área 1/7 · manual CBMES 2014",
+                group: "CP",
+                topics: [
+                    "Uso da água: propriedades extintoras",
+                    "Pressão, jatos e técnicas de manejo do esguicho",
+                    "Espuma: aplicação e tipos",
+                    "Fases do socorro: aviso, partida, deslocamento",
+                    "Fases do socorro: reconhecimento e estabelecimento",
+                    "Fases do socorro: combate, salvamento, rescaldo, regresso e relatório",
+                    "Técnicas: combate ofensivo e defensivo",
+                    "Técnicas: isolamento e confinamento",
+                    "Incêndios classe A (estruturais)",
+                    "Incêndios classe B (líquidos inflamáveis)",
+                    "Incêndios classe C (eletricidade)",
+                    "Incêndios classe D (metais)",
+                    "Ventilação tática e cuidados",
+                    "Ventilação vertical, horizontal, natural e forçada",
+                    "Buscas em incêndio: reconhecimento e tipos de ação",
+                    "Técnicas de retirada de vítimas e riscos"
+                ]
+            },
+            "cp_florestal": {
+                name: "Combate a Incêndio Florestal",
+                meta: "CP · área 2/7 · módulos I a V do CBMMT 2020",
+                group: "CP",
+                topics: [
+                    "Teoria básica do incêndio florestal",
+                    "Organização de pessoal e material",
+                    "Táticas e técnicas de combate",
+                    "Uso do fogo na prevenção e combate",
+                    "Emprego de aeronaves em operações"
+                ]
+            },
+            "cp_perigosos": {
+                name: "Emergência com Produtos Perigosos",
+                meta: "CP · área 3/7 · MOB CBMGO 2017",
+                group: "CP",
+                topics: [
+                    "Identificação ONU: classes e subclasses",
+                    "Painel de segurança e pictogramas",
+                    "Globally Harmonied System (GHS)",
+                    "Zoneamento: zona quente, morna e fria",
+                    "Fatores para definição de zoneamento",
+                    "Isolamento de área: objetivos e dimensionamento",
+                    "Estacionamento: objetivos e posicionamento",
+                    "Descontaminação: objetivos e procedimentos",
+                    "Primeiros socorros para vítimas de prod. perigosos"
+                ]
+            },
+            "cp_aph": {
+                name: "Atendimento Pré-Hospitalar (APH)",
+                meta: "CP · área 4/7 · MOB CBMGO + PHTLS 8ª ed",
+                group: "CP",
+                topics: [
+                    "Legislação básica de APH e aspectos bioéticos",
+                    "Noções básicas de anatomia",
+                    "Biossegurança",
+                    "Cinemática do trauma",
+                    "Avaliação da cena e da vítima",
+                    "Manejo de vias aéreas e oxigenoterapia",
+                    "Emergências cardiovasculares: hemorragias",
+                    "Estado de choque",
+                    "Síndromes coronarianas agudas",
+                    "Trauma de extremidades",
+                    "Trauma cranioencefálico (TCE)",
+                    "Trauma raquimedular (TRM)",
+                    "Trauma abdominal e torácico",
+                    "Trauma no idoso e na criança",
+                    "Trauma dentário",
+                    "Lesões térmicas (queimaduras)",
+                    "Ferimentos em tecidos moles",
+                    "Movimentação de vítimas",
+                    "Emergências clínicas: AVE",
+                    "Crise hipertensiva",
+                    "Convulsões, epilepsia e perda de consciência",
+                    "Diabetes",
+                    "Acidentes com múltiplas vítimas",
+                    "Resgate em ocorrências psiquiátricas",
+                    "Assistência ao parto no APH",
+                    "Choque elétrico",
+                    "Afogamento",
+                    "Acidentes com animais peçonhentos",
+                    "Intoxicação exógena",
+                    "Operações aeromédicas"
+                ]
+            },
+            "cp_altura": {
+                name: "Salvamento em Altura",
+                meta: "CP · área 5/7 · Manual PMESP vol 26",
+                group: "CP",
+                topics: [
+                    "Princípios do salvamento em altura",
+                    "Procedimentos de segurança",
+                    "Materiais e equipamentos",
+                    "Nós e amarrações",
+                    "Técnicas e táticas de ascensão",
+                    "Técnicas e táticas de descensão",
+                    "Ancoragens",
+                    "Tirolesas",
+                    "Sistema de redução de força (vantagem mecânica)",
+                    "Salvamento propriamente dito"
+                ]
+            },
+            "cp_terrestre": {
+                name: "Salvamento Terrestre",
+                meta: "CP · área 6/7 · MOB CBMGO 2018",
+                group: "CP",
+                topics: [
+                    "Contenção de animais: serpentes, felídeos, xenartros",
+                    "Contenção: marsupiais, canídeos, bovinos e equinos",
+                    "Contenção: primatas, aves, roedores, abelhas/vespas",
+                    "Operações com árvores: avaliação e cortes",
+                    "Operações com árvores: motosserra e planejamento",
+                    "Atendimento a pessoas presas em elevador",
+                    "Sistemas multiplicadores de força",
+                    "Operações em espaço confinado",
+                    "BREC: busca e resgate em estruturas colapsadas",
+                    "BREC: escoramento e técnicas de acesso",
+                    "BREC: marcações e sinalizações",
+                    "Técnicas de salvamento com escadas",
+                    "Busca e salvamento em matas e regiões difíceis",
+                    "Sobrevivência na mata e uso de tecnologia",
+                    "Ocorrências envolvendo eletricidade",
+                    "Salvamento veicular: ferramentas e equipamentos",
+                    "Salvamento veicular: ciclo operacional e rotina"
+                ]
+            },
+            "cp_aquatico": {
+                name: "Salvamento Aquático",
+                meta: "CP · área 7/7 · MOB CBMGO + CBMSC + SOBRASA",
+                group: "CP",
+                topics: [
+                    "Conceito de salvamento aquático",
+                    "Prevenção de acidentes em meios líquidos",
+                    "Sinalização",
+                    "Fases do salvamento aquático",
+                    "Tipos de acidentes no meio líquido",
+                    "Fases do afogamento",
+                    "Classificação do afogado",
+                    "Atendimento pré-hospitalar ao afogado",
+                    "Salvamento em enchentes e inundações",
+                    "Causas dos afogamentos"
+                ]
+            },
+            "clpap": {
+                name: "Português + Adm. Pública e Gestão",
+                meta: "20 questões · peso 1,0 · mín. 50%",
+                group: "OUTROS",
+                topics: [
+                    "Interpretação de textos (gêneros e tipos textuais)",
+                    "Coesão textual (referenciação, substituição, operadores)",
+                    "Variações linguísticas e funções da linguagem",
+                    "Ortografia oficial e acentuação",
+                    "Uso de hífen e homônimas/homófonas/homógrafas",
+                    "Uso de maiúsculas e minúsculas",
+                    "Morfossintaxe (estrutura, formação, classe de palavras)",
+                    "Emprego de tempos e modos verbais",
+                    "Coordenação e subordinação (orações e termos)",
+                    "Pontuação",
+                    "Semântica (denotação, conotação, sinonímia, antonímia, polissemia)",
+                    "Concordância nominal e verbal",
+                    "Regência nominal e verbal, crase",
+                    "Reescrita de frases, parágrafos e textos",
+                    "Estado, governo e administração pública: conceitos",
+                    "Organização administrativa (direta e indireta)",
+                    "Agentes públicos: espécies, classificação, poderes, deveres",
+                    "Poderes administrativos",
+                    "Atos administrativos: conceito, requisitos, atributos, espécies",
+                    "Controle e responsabilização da administração",
+                    "Modelos de Adm Pública: patrimonialista, burocrático, gerencial",
+                    "Ética no exercício da função pública",
+                    "Eficiência, eficácia e efetividade",
+                    "Gestão de materiais e patrimônio",
+                    "Gestão de Pessoas (avaliação de desempenho, competências)",
+                    "Gestão Estratégica: BSC, SWOT, GUT, 5W2H",
+                    "Lei 7.692/2002 (processo administrativo em MT)"
+                ]
+            },
+            "cpjm": {
+                name: "Polícia Judiciária Militar",
+                meta: "20 questões · peso 1,25 · mín. 50%",
+                group: "OUTROS",
+                topics: [
+                    "Código Penal Militar - Parte Geral (arts. 9º, 12, 13, 21 a 24)",
+                    "CPM - Parte Especial (arts. 149, 157, 160, 163, 166, 175, 187, 195, 202)",
+                    "Código de Processo Penal Militar (arts. 7º, 9º a 13, 15, 21 a 23, 26 a 28)",
+                    "CPPM (arts. 451 a 456)",
+                    "Regulamento Disciplinar PMMT (Decreto 1.329/1978)",
+                    "Manual de PJM do CBMMT (Portaria 009/2017)",
+                    "Lei 13.869/2019 (Abuso de Autoridade)",
+                    "Lei 9.455/1997 (Tortura)",
+                    "Lei 8.429/1992 (Improbidade Administrativa)",
+                    "Portaria 052/CG/2020",
+                    "Lei 13.491/2017 (altera o CPM)"
+                ]
+            },
+            "clibm": {
+                name: "Legislação Bombeiro Militar",
+                meta: "20 questões · peso 1,75 · mín. 50%",
+                group: "OUTROS",
+                topics: [
+                    "CF/88 - Princípios fundamentais (arts. 1º a 4º)",
+                    "CF/88 - Direitos e garantias fundamentais (arts. 5º a 11)",
+                    "CF/88 - Organização político-administrativa (arts. 18 a 33)",
+                    "CF/88 - Administração Pública (art. 37)",
+                    "CF/88 - Regime Jurídico dos Militares (arts. 22-XXI, 42 e 142)",
+                    "CF/88 - Segurança Pública (art. 144)",
+                    "CF/88 - Organização dos Poderes (arts. 76 a 91)",
+                    "Constituição de MT (arts. 74 a 77 e 82)",
+                    "LC 555/2014 (estatuto dos militares MT)",
+                    "LC 404/2010",
+                    "LC 530/2014",
+                    "LC 408/2010",
+                    "Lei 10.076/2014 (promoções)",
+                    "Decreto 2.268/2014 (regulamenta promoções)",
+                    "Decreto 591/1980 (movimentação)",
+                    "Decreto 961/2012 e Diretriz Conjunta 003/2011",
+                    "Lei 10.402/2016",
+                    "Decreto 859/2017",
+                    "Portaria 009/BM-8/2013 (Regulamento Geral do CBMMT)"
+                ]
+            }
+        };
+
+        const STATUS_LABELS = {
+            naoestudado: { icon: "○", label: "Não estudado" },
+            estudando: { icon: "◐", label: "Estudando" },
+            revisar: { icon: "↻", label: "Revisar" },
+            dominado: { icon: "✓", label: "Dominado" }
+        };
+
+        let state = {};
+        const STORAGE_KEY = "cbmmt:progresso:v3";
+
+        function openModal(message, isConfirmation = false, onConfirm = null) {
+            const modal = document.getElementById("customModal");
+            const msgEl = document.getElementById("modalMessage");
+            const btnCancel = document.getElementById("modalBtnCancel");
+            const btnConfirm = document.getElementById("modalBtnConfirm");
+
+            msgEl.textContent = message;
+            
+            if (isConfirmation) {
+                btnCancel.style.display = "block";
+            } else {
+                btnCancel.style.display = "none";
+            }
+
+            modal.style.display = "flex";
+
+            // Limpar eventos antigos
+            btnConfirm.onclick = null;
+            btnCancel.onclick = null;
+
+            btnConfirm.onclick = () => {
+                modal.style.display = "none";
+                if (onConfirm) onConfirm();
+            };
+
+            btnCancel.onclick = () => {
+                modal.style.display = "none";
+            };
+        }
+
+        function loadState() {
+            try {
+                // Modificado para usar localStorage nativo do navegador
+                const result = localStorage.getItem(STORAGE_KEY);
+                state = result ? JSON.parse(result) : {};
+            } catch (e) {
+                state = {};
+            }
+            render();
+        }
+
+        function saveState() {
+            try {
+                // Modificado para usar localStorage nativo do navegador
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.error("Erro ao salvar:", e);
+            }
+        }
+
+        function getStatus(subjectKey, topicIdx) {
+            return state[subjectKey]?.[topicIdx] || "naoestudado";
+        }
+
+        function setStatus(subjectKey, topicIdx, status) {
+            if (!state[subjectKey]) state[subjectKey] = {};
+            state[subjectKey][topicIdx] = status;
+            saveState();
+            render();
+        }
+
+        function calcSubjectProgress(subjectKey) {
+            const subj = EDITAL_DATA[subjectKey];
+            const total = subj.topics.length;
+            let pts = 0;
+            for (let i = 0; i < total; i++) {
+                const s = getStatus(subjectKey, i);
+                if (s === "dominado") pts += 1;
+                else if (s === "revisar") pts += 0.75;
+                else if (s === "estudando") pts += 0.4;
+            }
+            return Math.round((pts / total) * 100);
+        }
+
+        function calcOverallProgress() {
+            let totalPts = 0, totalTopics = 0;
+            for (const k in EDITAL_DATA) {
+                const subj = EDITAL_DATA[k];
+                totalTopics += subj.topics.length;
+                for (let i = 0; i < subj.topics.length; i++) {
+                    const s = getStatus(k, i);
+                    if (s === "dominado") totalPts += 1;
+                    else if (s === "revisar") totalPts += 0.75;
+                    else if (s === "estudando") totalPts += 0.4;
+                }
+            }
+            return totalTopics ? Math.round((totalPts / totalTopics) * 100) : 0;
+        }
+
+        function countByStatus() {
+            const counts = { naoestudado: 0, estudando: 0, revisar: 0, dominado: 0 };
+            for (const k in EDITAL_DATA) {
+                for (let i = 0; i < EDITAL_DATA[k].topics.length; i++) {
+                    counts[getStatus(k, i)]++;
+                }
+            }
+            return counts;
+        }
+
+        function progressColor(pct) {
+            if (pct >= 80) return "linear-gradient(90deg, #00d4aa, #00ffcc)";
+            if (pct >= 50) return "linear-gradient(90deg, #7dd957, #a8e87a)";
+            if (pct >= 25) return "linear-gradient(90deg, #ffb84d, #ffd17a)";
+            return "#4a6670";
+        }
+
+        function escapeHtml(s) {
+            return s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+        }
+
+        function renderSubjectCard(key, subj) {
+            const pct = calcSubjectProgress(key);
+            const dominados = subj.topics.filter((_, i) => getStatus(key, i) === "dominado").length;
+            const groupBadge = subj.group === "CP" ? `<span class="cp-group-marker">CP·P2.0</span>` : "";
+
+            return `
+                <div class="subject-card" data-subject="${key}">
+                    <div class="subject-header" onclick="toggleSubject('${key}')">
+                        <div class="subject-info">
+                            <p class="subject-name">${groupBadge}${escapeHtml(subj.name)}</p>
+                            <p class="subject-meta">${escapeHtml(subj.meta)} · ${dominados}/${subj.topics.length} ok</p>
+                        </div>
+                        <div class="subject-progress">
+                            <div class="mini-bar-bg">
+                                <div class="mini-bar-fill" style="width:${pct}%; background:${progressColor(pct)};"></div>
+                            </div>
+                            <span class="mini-bar-num">${pct}%</span>
+                            <span class="chevron">▶</span>
+                        </div>
+                    </div>
+                    <div class="topics-list">
+                        ${subj.topics.map((topic, i) => {
+                            const cur = getStatus(key, i);
+                            return `
+                                <div class="topic-row">
+                                    <span class="topic-text">${escapeHtml(topic)}</span>
+                                    <span class="topic-status">
+                                        ${Object.entries(STATUS_LABELS).map(([k, v]) => `
+                                            <button class="status-btn ${k} ${cur === k ? 'active' : ''}" 
+                                                onclick="changeStatus('${key}', ${i}, '${k}', event)" 
+                                                title="${v.label}">${v.icon}</button>
+                                        `).join('')}
+                                    </span>
+                                </div>
+                            `;
+                        }).join('')}
+                        <div style="padding: 8px 14px;">
+                            <button class="study-btn primary" onclick="startStudy('${key}')">▶ Estudar essa área agora</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const overall = calcOverallProgress();
+            const counts = countByStatus();
+
+            const cpKeys = Object.keys(EDITAL_DATA).filter(k => EDITAL_DATA[k].group === "CP");
+            
+            let cpProgressTotal = 0, cpTopicsTotal = 0;
+            cpKeys.forEach(k => {
+                const subj = EDITAL_DATA[k];
+                cpTopicsTotal += subj.topics.length;
+                for (let i = 0; i < subj.topics.length; i++) {
+                    const s = getStatus(k, i);
+                    if (s === "dominado") cpProgressTotal += 1;
+                    else if (s === "revisar") cpProgressTotal += 0.75;
+                    else if (s === "estudando") cpProgressTotal += 0.4;
+                }
+            });
+            const cpPct = cpTopicsTotal ? Math.round((cpProgressTotal / cpTopicsTotal) * 100) : 0;
+
+            let html = `
+                <div class="hud-frame">
+                    <span class="hud-corner tl"></span>
+                    <span class="hud-corner tr"></span>
+                    <span class="hud-corner bl"></span>
+                    <span class="hud-corner br"></span>
+                    <p class="hud-title">// SYS.CBMMT · 3º SGT</p>
+                    <p class="hud-subtitle">Painel de estudos</p>
+                    <p class="hud-meta">EDITAL 003/DEIP/BM-1/CBMMT/2021 · 80Q · 4 GRUPOS · MIN 50%/GRUPO</p>
+                    
+                    <div class="progress-overall">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: ${overall}%;"></div>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stat-pill primary">${overall}% GERAL</span>
+                            <span class="stat-pill green">${counts.dominado} OK</span>
+                            <span class="stat-pill blue">${counts.revisar} REV</span>
+                            <span class="stat-pill amber">${counts.estudando} EM CURSO</span>
+                            <span class="stat-pill gray">${counts.naoestudado} PEND</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <span class="legend-item"><span class="legend-dot" style="background:#1a2a32; border-color:#4a6670;"></span>Não estudado</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:#3d2a0a; border-color:#ffb84d;"></span>Estudando</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:#0a2540; border-color:#5db4ff;"></span>Revisar</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:#0a3320; border-color:#7dd957;"></span>Dominado</span>
+                </div>
+
+                <div class="section-divider">
+                    <span class="marker">[01]</span> Conhecimentos Profissionais · ${cpPct}% · peso 2.0
+                </div>
+            `;
+
+            cpKeys.forEach(k => {
+                html += renderSubjectCard(k, EDITAL_DATA[k]);
+            });
+
+            html += `<div class="section-divider"><span class="marker">[02]</span> Português + Adm. Pública · peso 1.0</div>`;
+            html += renderSubjectCard("clpap", EDITAL_DATA["clpap"]);
+
+            html += `<div class="section-divider"><span class="marker">[03]</span> Polícia Judiciária Militar · peso 1.25</div>`;
+            html += renderSubjectCard("cpjm", EDITAL_DATA["cpjm"]);
+
+            html += `<div class="section-divider"><span class="marker">[04]</span> Legislação Bombeiro Militar · peso 1.75</div>`;
+            html += renderSubjectCard("clibm", EDITAL_DATA["clibm"]);
+
+            html += `
+                <div class="actions">
+                    <button class="study-btn primary" onclick="suggestNext()">▶ O que estudar agora?</button>
+                    <button class="study-btn" onclick="reviewMode()">↻ Modo revisão</button>
+                    <button class="study-btn danger" onclick="resetAll()">⨯ Zerar progresso</button>
+                </div>
+            `;
+
+            document.getElementById("content").className = "";
+            document.getElementById("content").innerHTML = html;
+        }
+
+        window.toggleSubject = function(key) {
+            const card = document.querySelector(`.subject-card[data-subject="${key}"]`);
+            card.classList.toggle("open");
+        };
+
+        // Adicionado o parâmetro 'evt' para evitar erro de escopo global
+        window.changeStatus = function(key, idx, status, evt) {
+            evt.stopPropagation();
+            const current = getStatus(key, idx);
+            setStatus(key, idx, current === status ? "naoestudado" : status);
+        };
+
+        window.sendPrompt = function(text) {
+            // Tenta copiar para a área de transferência usando a API moderna
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    openModal("COPIADO PARA A ÁREA DE TRANSFERÊNCIA!\n\nCole este comando no seu ChatGPT, Claude ou Gemini para começar:\n\n" + text);
+                }).catch(err => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        };
+
+        function fallbackCopy(text) {
+            // Cria um campo de texto temporário para copiar (compatibilidade com celulares)
+            let textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                openModal("COPIADO!\n\nCole este comando no seu ChatGPT, Claude ou Gemini:\n\n" + text);
+            } catch (err) {
+                openModal("Não foi possível copiar automaticamente. Selecione e copie o texto abaixo:\n\n" + text);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        window.startStudy = function(key) {
+            const subj = EDITAL_DATA[key];
+            let firstPending = null;
+            for (let i = 0; i < subj.topics.length; i++) {
+                if (getStatus(key, i) === "naoestudado") {
+                    firstPending = subj.topics[i];
+                    break;
+                }
+            }
+            if (!firstPending) firstPending = subj.topics[0];
+            sendPrompt(`Quero estudar agora a área "${subj.name}". Começa pelo tópico: "${firstPending}". Me ensina com base nos materiais focados no CBMMT. Se precisar de contexto, me avise. No final, faça 3 perguntas objetivas para eu testar se aprendi.`);
+        };
+
+        window.suggestNext = function() {
+            sendPrompt("Aja como meu mentor de estudos para o concurso de 3º Sargento do CBMMT. Tenho um edital com pesos diferentes (CP peso 2.0, LBM peso 1.75, etc). O que me sugere estudar agora para maximizar meus pontos? Me ensine o tópico que escolher.");
+        };
+
+        window.reviewMode = function() {
+            sendPrompt("Quero entrar em modo revisão. Por favor, me faça uma bateria de 10 questões misturando Conhecimentos Profissionais de Bombeiro, Atendimento Pré-Hospitalar e Legislação do CBMMT. Depois avalie minhas respostas.");
+        };
+
+        window.resetAll = function() {
+            openModal("Atenção!\n\nVocê está prestes a zerar TODO o seu progresso de estudos. \n\nIsso não pode ser desfeito. Tem certeza?", true, () => {
+                state = {};
+                saveState();
+                render();
+            });
+        };
+
+        // Inicia a aplicação
+        loadState();
+    </script>
+</body>
+</html>
