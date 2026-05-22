@@ -6,13 +6,8 @@
     <title>Painel de Estudos CBMMT</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- CONFIGURAÇÕES DO PWA (Início) -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#050a0d"> <!-- Combina com o fundo escuro -->
-    <link rel="apple-touch-icon" href="icone-192.png"> <!-- Ícone para quem usa iPhone -->
-    <!-- CONFIGURAÇÕES DO PWA (Fim) -->
-
-    <style>
+    <meta name="theme-color" content="#050a0d"> <link rel="apple-touch-icon" href="icone-192.png"> <style>
         :root {
             --font-mono: 'Courier New', Courier, monospace;
             --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
@@ -379,6 +374,19 @@
             <div class="modal-actions">
                 <button id="modalBtnCancel" class="study-btn">Cancelar</button>
                 <button id="modalBtnConfirm" class="study-btn primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="installModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-text" style="text-align: center;">
+                <strong style="color: #00d4aa; font-size: 18px; letter-spacing: 1px;">SISTEMA PRONTO</strong><br><br>
+                Instale o Painel de Estudos no seu aparelho para acessar em tela cheia e usar offline.
+            </div>
+            <div class="modal-actions" style="justify-content: center; margin-top: 15px;">
+                <button id="btnCancelInstall" class="study-btn">Mais tarde</button>
+                <button id="btnConfirmInstall" class="study-btn primary">Instalar Aplicativo</button>
             </div>
         </div>
     </div>
@@ -923,9 +931,41 @@
 
         // Inicia a aplicação
         loadState();
+
+        // --- SISTEMA DO POP-UP DE INSTALAÇÃO ---
+        let promptDeInstalacao;
+        const installModal = document.getElementById('installModal');
+        const btnConfirmInstall = document.getElementById('btnConfirmInstall');
+        const btnCancelInstall = document.getElementById('btnCancelInstall');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Impede a barra padrão do Chrome
+            e.preventDefault();
+            // Guarda o evento
+            promptDeInstalacao = e;
+            // Mostra nosso Modal customizado após 2 segundos
+            setTimeout(() => {
+                installModal.style.display = 'flex';
+            }, 2000); 
+        });
+
+        btnCancelInstall.addEventListener('click', () => {
+            installModal.style.display = 'none';
+        });
+
+        btnConfirmInstall.addEventListener('click', async () => {
+            installModal.style.display = 'none';
+            if (promptDeInstalacao) {
+                promptDeInstalacao.prompt();
+                const { outcome } = await promptDeInstalacao.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('Usuário aceitou a instalação');
+                }
+                promptDeInstalacao = null;
+            }
+        });
     </script>
 
-    <!-- SCRIPT DE REGISTRO DO SERVICE WORKER (Para o app instalar offline) -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
