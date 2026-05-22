@@ -4,17 +4,17 @@
   "start_url": "/APP-estudo/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#cc0000",
+  "theme_color": "#050a0d",
   "icons": [
     {
-      "src": "icone-192.png",
+      "src": "icone-192.jpg",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/jpeg"
     },
     {
-      "src": "icone-512.png",
+      "src": "icone-512.jpg",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/jpeg"
     }
   ]
 }
