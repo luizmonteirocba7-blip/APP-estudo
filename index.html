@@ -6,6 +6,12 @@
     <title>Painel de Estudos CBMMT</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     
+    <!-- CONFIGURAÇÕES DO PWA (Início) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#050a0d"> <!-- Combina com o fundo escuro -->
+    <link rel="apple-touch-icon" href="icone-192.png"> <!-- Ícone para quem usa iPhone -->
+    <!-- CONFIGURAÇÕES DO PWA (Fim) -->
+
     <style>
         :root {
             --font-mono: 'Courier New', Courier, monospace;
@@ -647,7 +653,6 @@
 
         function loadState() {
             try {
-                // Modificado para usar localStorage nativo do navegador
                 const result = localStorage.getItem(STORAGE_KEY);
                 state = result ? JSON.parse(result) : {};
             } catch (e) {
@@ -658,7 +663,6 @@
 
         function saveState() {
             try {
-                // Modificado para usar localStorage nativo do navegador
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
             } catch (e) {
                 console.error("Erro ao salvar:", e);
@@ -854,7 +858,6 @@
             card.classList.toggle("open");
         };
 
-        // Adicionado o parâmetro 'evt' para evitar erro de escopo global
         window.changeStatus = function(key, idx, status, evt) {
             evt.stopPropagation();
             const current = getStatus(key, idx);
@@ -862,7 +865,6 @@
         };
 
         window.sendPrompt = function(text) {
-            // Tenta copiar para a área de transferência usando a API moderna
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text).then(() => {
                     openModal("COPIADO PARA A ÁREA DE TRANSFERÊNCIA!\n\nCole este comando no seu ChatGPT, Claude ou Gemini para começar:\n\n" + text);
@@ -875,7 +877,6 @@
         };
 
         function fallbackCopy(text) {
-            // Cria um campo de texto temporário para copiar (compatibilidade com celulares)
             let textArea = document.createElement("textarea");
             textArea.value = text;
             textArea.style.position = "fixed";
@@ -922,6 +923,17 @@
 
         // Inicia a aplicação
         loadState();
+    </script>
+
+    <!-- SCRIPT DE REGISTRO DO SERVICE WORKER (Para o app instalar offline) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/APP-estudo/sw.js')
+                    .then(reg => console.log('App pronto para instalação!'))
+                    .catch(err => console.log('Erro ao registrar:', err));
+            });
+        }
     </script>
 </body>
 </html>
